@@ -1,5 +1,6 @@
 import numpy as np
 import random
+import matplotlib.pyplot as plt
 
 # how do you pick cutoff radius?
 # how do you find the direction of the force?
@@ -14,12 +15,12 @@ KT = 1.0 # Thermal energy
 dt = 0.01 # Time step
 
 particles = np.zeros((N, 3)) # An array that will store the locations of particles
-velocities = np.random.randn(N,3) * box_size # small random velocities
+velocities = np.random.randn(N,3) * box # small random velocities
 forces = np.zeros((N,3))
 
 # Create 50 particles randomly in the box and make sure they do not overlap
 for particle in particles:
-    safty_liimit = 0
+    safety_limit = 0
     while particle in particles:
         particle = np.random.rand(3)
         safety_limit += 1
@@ -30,20 +31,20 @@ for particle in particles:
 
 
 
-def conservative_fore(r, a, rc):
+def conservative_force(r, a, rc):
     if 1e-10 < r < rc:  # avoid devision by 0
         return a*(1.0 - r/rc)
     return 0
 
-def disspative_force(r, gamma, rc, v_ij, r_ij):
-    if 1e_10 < r < rc:
+def dissipative_force(r, gamma, rc, v_ij, r_ij):
+    if 1e-10 < r < rc:
         r_hat = r_ij/r
         w_D = (1.0 - r/rc)**2
         return -gamma * w_D * np.dot(v_ij, r_hat) * r_hat
     return np.zeros(3)
 
 def random_force(r, sigma, rc, dt, r_ij):
-    if 1e_10 < r < rc:
+    if 1e-10 < r < rc:
         r_hat = r_ij/r
         w_R = 1.0 - r/rc
         theta = np.random.normal(0,1)
@@ -66,7 +67,7 @@ def calculate_forces():
 
     for i in range(N):
         for j in range(i+1, N):
-            r_ij = minimum_image_distance(particle[i], particle[j], box_size)
+            r_ij = minimum_image_distance(particles[i], particles[j], box)
             r = np.linalg.norm(r_ij)
 
             if 1e-10 < r < rc:
@@ -94,7 +95,8 @@ def apply_periodic_boundaries():
     '''
     Apply periodic boundary conditions
     '''
-    particle %= box_size
+    global particles
+    particles %= box
 
 def velocity_verlet():
     global particles, velocities, forces
@@ -103,16 +105,16 @@ def velocity_verlet():
 
     apply_periodic_boundaries()
 
-    force_new = calculate_forces()
+    forces_new = calculate_forces()
 
-    velocities += 0.5 * (forces + force_new) *dt
+    velocities += 0.5 * (forces + forces_new) *dt
     forces = forces_new
 
 # Initialize the forces
 forces = calculate_forces()
 
 steps = 1000
-for step in range(steps)
+for step in range(steps):
     velocity_verlet()
 
     if step % 100 == 0:
@@ -125,9 +127,9 @@ for step in range(steps)
 fig = plt.figure(figsize=(10, 8))
 ax = fig.add_subplot(111, projection='3d')
 ax.scatter(particles[:, 0], particles[:, 1], particles[:, 2], c='blue', s=50)
-ax.set_xlim(0, box_size)
-ax.set_ylim(0, box_size)
-ax.set_zlim(0, box_size)
+ax.set_xlim(0, box)
+ax.set_ylim(0, box)
+ax.set_zlim(0, box)
 ax.set_xlabel('X')
 ax.set_ylabel('Y')
 ax.set_zlabel('Z')
