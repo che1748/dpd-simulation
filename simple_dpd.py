@@ -14,22 +14,24 @@ sigma = 3.0 # Random force coefficient
 KT = 1.0 # Thermal energy
 dt = 0.01 # Time step
 
-particles = np.zeros((N, 3)) # An array that will store the locations of particles
+particles = np.random.rand(N,3) * box # An array that will store the locations of particles
 velocities = np.random.randn(N,3) * box # small random velocities
 forces = np.zeros((N,3))
 
 # Create 50 particles randomly in the box and make sure they do not overlap
+'''
 for particle in particles:
     safety_limit = 0
     while particle in particles:
-        particle = np.random.rand(3)
+        particle = np.random.rand(3)*box
         safety_limit += 1
 
         if safety_limit > 1000:
             print("The particle cannot be put into the box without overlap")
             break
+'''
 
-
+print(particles)
 
 def conservative_force(r, a, rc):
     if 1e-10 < r < rc:  # avoid devision by 0
@@ -40,7 +42,7 @@ def dissipative_force(r, gamma, rc, v_ij, r_ij):
     if 1e-10 < r < rc:
         r_hat = r_ij/r
         w_D = (1.0 - r/rc)**2
-        return -gamma * w_D * np.dot(v_ij, r_hat) * r_hat
+        return -gamma * w_D * r*np.dot(v_ij, r_hat) * r_hat
     return np.zeros(3)
 
 def random_force(r, sigma, rc, dt, r_ij):
@@ -48,7 +50,7 @@ def random_force(r, sigma, rc, dt, r_ij):
         r_hat = r_ij/r
         w_R = 1.0 - r/rc
         theta = np.random.normal(0,1)
-        return sigma * w_R * theta * r_hat / np.sqrt(dt)
+        return sigma * w_R * r*theta * r_hat / np.sqrt(dt)
     return np.zeros(3)
 
 def minimum_image_distance(r_i, r_j, box_size):
@@ -130,6 +132,7 @@ for step in range(steps):
         print(f"Step {step}: Temperature = {temperature:.3f}")
 
 # Visualization
+'''
 fig = plt.figure(figsize=(10, 8))
 ax = fig.add_subplot(111, projection='3d')
 ax.scatter(particles[:, 0], particles[:, 1], particles[:, 2], c='blue', s=50)
@@ -141,3 +144,4 @@ ax.set_ylabel('Y')
 ax.set_zlabel('Z')
 ax.set_title('DPD Simulation - Final Configuration')
 plt.show()
+'''
