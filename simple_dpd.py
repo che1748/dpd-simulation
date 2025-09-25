@@ -15,7 +15,7 @@ KT = 1.0 # Thermal energy
 dt = 0.01 # Time step
 
 particles = np.random.rand(N,3) * box # An array that will store the locations of particles
-velocities = np.random.randn(N,3) * box # small random velocities
+velocities = np.random.randn(N,3) * 0.1 # small random velocities
 forces = np.zeros((N,3))
 
 # Create 50 particles randomly in the box and make sure they do not overlap
