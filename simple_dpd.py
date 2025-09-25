@@ -114,7 +114,13 @@ def velocity_verlet():
 forces = calculate_forces()
 
 steps = 1000
+fig = plt.figure(figsize=(10, 8))
+ax = fig.add_subplot(111, projection='3d')
 for step in range(steps):
+    if step % 50 ==0:
+        ax.scatter(particles[:, 0], particles[:, 1], particles[:, 2], c='blue', s=50)
+        plt.savefig(f'sim{step}.pdf')
+        ax.clear()
     velocity_verlet()
 
     if step % 100 == 0:
