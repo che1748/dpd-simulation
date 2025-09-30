@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import random
 import matplotlib.pyplot as plt
@@ -5,7 +6,7 @@ import matplotlib.pyplot as plt
 # how do you pick cutoff radius?
 # how do you find the direction of the force?
 
-box = 100    # Define the box size
+box = 30    # Define the box size
 N = 50  # number of particles
 rc = 1.0 # Cutiff radius
 a = 35.0 # concervative force coefficient
@@ -31,18 +32,18 @@ for particle in particles:
             break
 '''
 
-print(particles)
 
-def conservative_force(r, a, rc):
+def conservative_force(r, a, rc, r_ij):
     if 1e-10 < r < rc:  # avoid devision by 0
-        return a*(1.0 - r/rc)
-    return 0
+        r_hat = r_ij/r
+        return a*(1.0 - r/rc)*r_hat
+    return np.zeros(3)
 
 def dissipative_force(r, gamma, rc, v_ij, r_ij):
     if 1e-10 < r < rc:
         r_hat = r_ij/r
         w_D = (1.0 - r/rc)**2
-        return -gamma * w_D * r*np.dot(v_ij, r_hat) * r_hat
+        return -gamma * w_D * r *np.dot(v_ij, r_hat) * r_hat
     return np.zeros(3)
 
 def random_force(r, sigma, rc, dt, r_ij):
@@ -50,7 +51,7 @@ def random_force(r, sigma, rc, dt, r_ij):
         r_hat = r_ij/r
         w_R = 1.0 - r/rc
         theta = np.random.normal(0,1)
-        return sigma * w_R * r*theta * r_hat / np.sqrt(dt)
+        return sigma * w_R * r * theta * r_hat / np.sqrt(dt)
     return np.zeros(3)
 
 def minimum_image_distance(r_i, r_j, box_size):
@@ -65,8 +66,7 @@ def calculate_forces():
     '''
     calculate all forces between particles pairs
     '''
-    force = np.zeros((N,3))
-
+    global forces
     for i in range(N):
         for j in range(i+1, N):
             r_ij = minimum_image_distance(particles[i], particles[j], box)
@@ -76,21 +76,19 @@ def calculate_forces():
                 v_ij = velocities[i] - velocities[j]
 
                 # Conservative force
-                F_c = conservative_force(r,a,rc)
-                force_dir = r_ij/r
-                forces[i] += F_c * force_dir
-                forces[j] -= F_c * force_dir
+                F_c = conservative_force(r,a,rc,r_ij)
+                forces[i] += F_c 
+                forces[j] -= F_c 
 
                 # Dissipative force
                 F_d = dissipative_force(r, gamma, rc, v_ij, r_ij)
-                force[i] += F_d
-                force[j] -= F_d
+                forces[i] += F_d
+                forces[j] -= F_d
 
                 # Random force
                 F_r = random_force(r, sigma, rc, dt, r_ij)
                 forces[i] += F_r
                 forces[j] -= F_r
-
         return forces
 
 def apply_periodic_boundaries():
@@ -112,36 +110,57 @@ def velocity_verlet():
     velocities += 0.5 * (forces + forces_new) *dt
     forces = forces_new
 
+
+
+
 # Initialize the forces
-forces = calculate_forces()
+calculate_forces()
 
-steps = 1000
-fig = plt.figure(figsize=(10, 8))
-ax = fig.add_subplot(111, projection='3d')
-for step in range(steps):
-    if step % 50 ==0:
-        ax.scatter(particles[:, 0], particles[:, 1], particles[:, 2], c='blue', s=50)
-        plt.savefig(f'sim{step}.pdf')
-        ax.clear()
-    velocity_verlet()
 
-    if step % 100 == 0:
-        # Calculate and print some statistics
-        kinetic_energy = 0.5 * np.sum(velocities**2)
-        temperature = 2.0 * kinetic_energy / (3.0 * N)
-        print(f"Step {step}: Temperature = {temperature:.3f}")
+def write_xyz_animation(particles_history, velocities_history, box_size, filename="animation.xyz"):
+    """
+    Write all frames to a single XYZ file for OVITO animation
+    """
+    with open(filename, 'w') as f:
+        for step, (particles, velocities) in enumerate(zip(particles_history, velocities_history)):
+            N = len(particles)
+            
+            # Write frame header
+            f.write(f"{N}\n")
+            f.write(f'Lattice="{box} 0 0 0 {box} 0 0 0 {box}" ')
+            f.write(f'Properties=pos:R:3:vel:R:3 Step={step}\n')
+            
+            # Write particle data
+            for i in range(N):
+                pos = particles[i]
+                vel = velocities[i]
+                f.write(f"{pos[0]:.6f} {pos[1]:.6f} {pos[2]:.6f} ")
+                f.write(f"{vel[0]:.6f} {vel[1]:.6f} {vel[2]:.6f}\n")
 
-# Visualization
-'''
-fig = plt.figure(figsize=(10, 8))
-ax = fig.add_subplot(111, projection='3d')
-ax.scatter(particles[:, 0], particles[:, 1], particles[:, 2], c='blue', s=50)
-ax.set_xlim(0, box)
-ax.set_ylim(0, box)
-ax.set_zlim(0, box)
-ax.set_xlabel('X')
-ax.set_ylabel('Y')
-ax.set_zlabel('Z')
-ax.set_title('DPD Simulation - Final Configuration')
-plt.show()
-'''
+# Usage: Collect data during simulation, then write animation
+def run_simulation_with_animation():
+    particles_history = []
+    velocities_history = []
+    
+    steps = 1000
+    save_interval = 10  # Save more frequently for smooth animation
+    
+    for step in range(steps):
+        velocity_verlet()
+        
+        # Collect data for animation
+        if step % save_interval == 0:
+            particles_history.append(particles.copy())
+            velocities_history.append(velocities.copy())
+        
+        if step % 100 == 0:
+            kinetic_energy = 0.5 * np.sum(velocities**2)
+            temperature = 2.0 * kinetic_energy / (3.0 * N)
+            print(f"Step {step}: Temperature = {temperature:.3f}")
+    
+    # Write animation file
+    write_xyz_animation(particles_history, velocities_history, box)
+    print(f"Animation saved with {len(particles_history)} frames")
+
+# Run the simulation
+run_simulation_with_animation()
