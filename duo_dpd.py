@@ -1,12 +1,11 @@
 import numpy as np
-import random
-import matplotlib.pyplot as plt
+
 
 # how do you pick cutoff radius?
 # how do you find the direction of the force?
 
 box = 10    # Define the box size
-N = 50  # number of particles
+N = 500  # number of particles
 NA = 25 #number of A particles
 NB = N-NA # number of B particles
 rc = 1.0 # Cutiff radius
@@ -165,7 +164,7 @@ def run_simulation_with_animation():
     particles_history = []
     velocities_history = []
     type_history = []
-    steps = 3000
+    steps = 4000
     save_interval = 10  # Save more frequently for smooth animation
     
     for step in range(steps):
@@ -188,3 +187,4 @@ def run_simulation_with_animation():
 
 # Run the simulation
 run_simulation_with_animation()
+print("The animation was run successfully!")
