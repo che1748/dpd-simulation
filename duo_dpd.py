@@ -97,18 +97,18 @@ def calculate_forces():
 
                 # Conservative force
                 F_c = conservative_force(r,a_ij,rc,r_ij)
-                forces[i] += F_c 
-                forces[j] -= F_c 
+                forces_total[i] += F_c 
+                forces_total[j] -= F_c 
 
                 # Dissipative force
                 F_d = dissipative_force(r, gamma, rc, v_ij, r_ij)
-                forces[i] += F_d
-                forces[j] -= F_d
+                forces_total[i] += F_d
+                forces_total[j] -= F_d
 
                 # Random force
                 F_r = random_force(r, sigma, rc, dt, r_ij)
-                forces[i] += F_r
-                forces[j] -= F_r
+                forces_total[i] += F_r
+                forces_total[j] -= F_r
     return forces_total
 
 def apply_periodic_boundaries():

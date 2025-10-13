@@ -1,4 +1,3 @@
-import os
 import numpy as np
 import random
 import matplotlib.pyplot as plt
@@ -9,7 +8,7 @@ import matplotlib.pyplot as plt
 box = 30    # Define the box size
 N = 50  # number of particles
 rc = 1.0 # Cutiff radius
-a = 35.0 # concervative force coefficient
+a = 25.0 # concervative force coefficients
 gamma = 4.5 #Disspative force coefficient
 sigma = 3.0 # Random force coefficient
 KT = 1.0 # Thermal energy
@@ -66,7 +65,7 @@ def calculate_forces():
     '''
     calculate all forces between particles pairs
     '''
-    global forces
+    forces_total = np.zeros((N,3))
     for i in range(N):
         for j in range(i+1, N):
             r_ij = minimum_image_distance(particles[i], particles[j], box)
@@ -89,7 +88,7 @@ def calculate_forces():
                 F_r = random_force(r, sigma, rc, dt, r_ij)
                 forces[i] += F_r
                 forces[j] -= F_r
-        return forces
+    return forces_total
 
 def apply_periodic_boundaries():
     '''
@@ -114,7 +113,7 @@ def velocity_verlet():
 
 
 # Initialize the forces
-calculate_forces()
+forces = calculate_forces()
 
 
 def write_xyz_animation(particles_history, velocities_history, box_size, filename="animation.xyz"):
